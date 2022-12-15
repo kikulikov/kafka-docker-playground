@@ -39,7 +39,7 @@ curl -X PUT \
      -H "Content-Type: application/json" \
      --data '{
                "connector.class": "io.confluent.connect.ibm.mq.IbmMQSourceConnector",
-                    "kafka.topic": "MyKafkaTopicName",
+                    "kafka.topic": "topic2",
                     "mq.hostname": "ibmmq",
                     "mq.port": "1414",
                     "mq.transport.type": "client",
@@ -49,6 +49,15 @@ curl -X PUT \
                     "mq.password": "passw0rd",
                     "jms.destination.name": "DEV.QUEUE.1",
                     "jms.destination.type": "queue",
+
+"transforms": "ExtractField,fromJson",
+"transforms.ExtractField.type": "org.apache.kafka.connect.transforms.ExtractField$Value",
+"transforms.ExtractField.field": "text",
+
+"transforms.fromJson.type" : "com.github.jcustenborder.kafka.connect.json.FromJson$Value",
+"transforms.fromJson.json.schema.location" : "Inline",
+"transforms.fromJson.json.schema.inline" : "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"$id\":\"https://example.com/employee.schema.json\",\"title\":\"record\",\"description\":\"document\",\"type\":\"object\",\"properties\":{\"id\":{\"description\":\"identifier\",\"type\":\"number\"},\"name\":{\"description\":\"full name\",\"type\":\"string\"}}}",
+
                     "confluent.license": "",
                     "confluent.topic.bootstrap.servers": "broker:9092",
                     "confluent.topic.replication.factor": "1"
@@ -59,11 +68,13 @@ sleep 5
 
 log "Sending messages to DEV.QUEUE.1 JMS queue:"
 docker exec -i ibmmq /opt/mqm/samp/bin/amqsput DEV.QUEUE.1 << EOF
-Message 1
-Message 1
+{"id":5,"name":"hello"}
+{"id":42,"name":"ciao"}
 EOF
 
 sleep 5
 
 log "Verify we have received the data in MyKafkaTopicName topic"
-timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic MyKafkaTopicName --from-beginning --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer --property print.key=true --max-messages 2
+# timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic MyKafkaTopicName --from-beginning --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer --property print.key=true --max-messages 2
+timeout 60 docker exec connect kafka-console-consumer -bootstrap-server broker:9092 \
+--topic topic2 --from-beginning --property print.key=true --max-messages 2

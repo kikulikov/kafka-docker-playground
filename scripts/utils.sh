@@ -346,6 +346,7 @@ then
           tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 cat << EOF > $tmp_dir/Dockerfile
 FROM vdesabou/kafka-docker-playground-connect:${CONNECT_TAG}
+RUN confluent-hub install --no-prompt jcustenborder/kafka-connect-json-schema:0.2.5
 RUN confluent-hub install --no-prompt $owner/$name:$CONNECTOR_VERSION
 EOF
           export CONNECT_TAG="cp-$TAG-$(echo $CONNECTOR_TAG | tr "," "-")"
@@ -512,6 +513,9 @@ else
             tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 cat << EOF > $tmp_dir/Dockerfile
 FROM vdesabou/kafka-docker-playground-connect:${CONNECT_TAG}
+RUN confluent-hub install --no-prompt jcustenborder/kafka-connect-json-schema:0.2.5
+RUN cp /usr/share/confluent-hub-components/jcustenborder-kafka-connect-json-schema/lib/* /etc/kafka-connect/jars/
+RUN confluent-hub install --no-prompt confluentinc/kafka-connect-ibmmq-sink:latest
 RUN confluent-hub install --no-prompt $owner/$name:$version_to_get_from_hub
 EOF
             docker build -t vdesabou/kafka-docker-playground-connect:$CONNECT_TAG $tmp_dir

@@ -42,7 +42,7 @@ curl -X PUT \
      -H "Content-Type: application/json" \
      --data '{
                "connector.class": "io.confluent.connect.jms.IbmMqSinkConnector",
-                    "topics": "sink-messages",
+                    "topics": "topic2",
                     "mq.hostname": "ibmmq",
                     "mq.port": "1414",
                     "mq.transport.type": "client",
@@ -50,9 +50,11 @@ curl -X PUT \
                     "mq.channel": "DEV.APP.SVRCONN",
                     "mq.username": "app",
                     "mq.password": "passw0rd",
-                    "jms.destination.name": "DEV.QUEUE.1",
+                    "jms.destination.name": "DEV.QUEUE.2",
                     "jms.destination.type": "queue",
-                    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+                    "jms.message.format": "json",
+                    "value.converter.schema.registry.url": "http://schema-registry:8081",
+                    "value.converter": "io.confluent.connect.avro.AvroConverter",
                     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
                     "confluent.license": "",
                     "confluent.topic.bootstrap.servers": "broker:9092",
@@ -62,8 +64,8 @@ curl -X PUT \
 
 sleep 10
 
-log "Verify message received in DEV.QUEUE.1 queue"
-docker exec ibmmq bash -c "/opt/mqm/samp/bin/amqsbcg DEV.QUEUE.1" > /tmp/result.log  2>&1
+log "Verify message received in DEV.QUEUE.2 queue"
+docker exec ibmmq bash -c "/opt/mqm/samp/bin/amqsbcg DEV.QUEUE.2" > /tmp/result.log  2>&1
 cat /tmp/result.log
 grep "my message" /tmp/result.log
 
